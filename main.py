@@ -118,7 +118,7 @@ class mywindow(QtWidgets.QMainWindow):
     def MSG(self):
         messg = QtWidgets.QMessageBox()
         messg.setWindowTitle("О Программе")
-        messg.setText("Разработчик Хайруллин И.И. \n Самарский университета\n Кафедра космического машиностроения ")
+        messg.setText(" Разработчик: Хайруллин И.И. \n Самарский университета\n Кафедра космического машиностроения ")
         x = messg.exec_()
 
 
