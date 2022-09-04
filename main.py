@@ -58,7 +58,7 @@ class calculations():
 
         self.theor_calc()
 
-        self.Initial_Speed = round(self.Initial_Speed, 3)
+        self.Initial_Speed = round(self.Initial_Speed)
         self.Gas_Flow_Speed = round(self.Gas_Flow_Speed, 3)
         self.Electro_Mass = round(self.Electro_Mass, 3)
         self.Payload_Mass = round(self.Payload_Mass, 3)
