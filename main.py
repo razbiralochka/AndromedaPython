@@ -173,10 +173,6 @@ class mywindow(QtWidgets.QMainWindow):
         x = messg.exec_()
 
 
-
-
-
-
 app = QtWidgets.QApplication([])
 application = mywindow()
 application.show()
