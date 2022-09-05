@@ -107,7 +107,7 @@ class calculations():
             self.db_calc()
 
 
-        self.EFFICIENCY=round(self.EFFICIENCY,2)
+        self.EFFICIENCY = round(self.EFFICIENCY*100)
         self.Initial_Speed = round(self.Initial_Speed, 3)
         self.Gas_Flow_Speed = round(self.Gas_Flow_Speed, 3)
         self.Electro_Mass = round(self.Electro_Mass, 3)
@@ -121,7 +121,7 @@ class calculations():
         self.Delta_velocity = round(self.Delta_velocity)
 
         print(self.EFFICIENCY)
-        application.ui.lineEdit_3.setText(str(self.EFFICIENCY * 100))
+        application.ui.lineEdit_3.setText(str(self.EFFICIENCY))
         application.ui.lineEdit_8.setText(str(self.Gas_Flow_Speed))
         application.ui.lineEdit_18.setText(str(self.Electro_Mass))
         application.ui.lineEdit_22.setText(str(self.Payload_Mass))
