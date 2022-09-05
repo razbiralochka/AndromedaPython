@@ -41,6 +41,20 @@ class calculations():
         self.Payload_R = round(math.sqrt(self.Payload_Mass / (0.02 * 1.5 * math.pi)))
         self.EnginesCount = round(self.Engines_Thrust)
 
+    def db_read(self):
+        for item in application.ui.tableView.selectedIndexes():
+            self.selectedEngine = str(item.row()+1)
+
+    def db_calc(self):
+        query = QtSql.QSqlQuery()
+        query.exec("SELECT * FROM engine WHERE Код = " + self.Selectedengine)
+        while query.next():
+            name = str(query.value(1))
+            Engines_Thrust = float(query.value(2)) * 0.001
+            Gas_Flow_Speed = float(query.value(3)) * 1000.0
+            Engines_Power = float(query.value(4)) * 1000.0
+            EFFICIENCY = float(query.value(5)) * 0.01
+            application.ui.lineEdit_23.setText(name)
     def calc_master(self):
         self.Fly_Time = float(application.ui.lineEdit.text()) * 86400
         self.Start_Orbit_Height = float(application.ui.lineEdit_4.text())
@@ -56,7 +70,14 @@ class calculations():
         self.EFFICIENCY = float(application.ui.lineEdit_3.text())
         self.EFFICIENCY *= 0.01
 
-        self.theor_calc()
+
+
+        if application.ui.radioButton.isChecked():
+            self.theor_calc()
+        if application.ui.radioButton_2.isChecked():
+            self.db_calc()
+
+
 
         self.Initial_Speed = round(self.Initial_Speed, 3)
         self.Gas_Flow_Speed = round(self.Gas_Flow_Speed, 3)
@@ -106,9 +127,14 @@ class mywindow(QtWidgets.QMainWindow):
         self.model.setTable("engine")
         self.model.select()
 
+
+
         self.ui.tableView.setModel(self.model)
         self.ui.pushButton.clicked.connect(calcCore.calc_master)
         self.ui.pushButton_2.clicked.connect(self.MSG)
+        self.ui.tableView.doubleClicked.connect(calcCore.db_read)
+
+
 
     def MSG(self):
         messg = QtWidgets.QMessageBox()
