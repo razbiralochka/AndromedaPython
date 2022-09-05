@@ -88,11 +88,25 @@ calcCore = calculations()
 
 
 class mywindow(QtWidgets.QMainWindow):
-    def __init__(self, model):
+    def __init__(self):
         super(mywindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.ui.tableView.setModel(model)
+        db = QtSql.QSqlDatabase.addDatabase("QODBC")
+        db.setDatabaseName(
+            "DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};FIL={MS Access};DSN='';DBQ=./engine.mdb")
+        if not db.open():
+            print('error db open')
+            messg = QtWidgets.QMessageBox()
+            messg.setWindowTitle("Ошибка открытия Базы Данных")
+            messg.setText(str(db.lastError))
+            x = messg.exec_()
+
+        self.model = QtSql.QSqlTableModel(self, db)
+        self.model.setTable("engine")
+        self.model.select()
+
+        self.ui.tableView.setModel(self.model)
         self.ui.pushButton.clicked.connect(calcCore.calc_master)
         self.ui.pushButton_2.clicked.connect(self.MSG)
 
@@ -103,26 +117,13 @@ class mywindow(QtWidgets.QMainWindow):
         x = messg.exec_()
 
 
-def main():
-    app = QtWidgets.QApplication([])
-    db = QtSql.QSqlDatabase.addDatabase("QODBC")
-    db.setDatabaseName(
-        "DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};FIL={MS Access};DSN='';DBQ=./engine.mdb")
-    if not db.open():
-        print('error db open')
-        messg = QtWidgets.QMessageBox()
-        messg.setWindowTitle("Ошибка открытия Базы Данных")
-        messg.setText(str(db.lastError))
-        x = messg.exec_()
-        sys.exit(-1)
-    model = QtSql.QSqlTableModel()
-    model.setTable("engine")
-    model.select()
-
-    application = mywindow(model)
-    application.show()
-    sys.exit(app.exec())
 
 
-if __name__ == '__main__':
-    main()
+
+
+app = QtWidgets.QApplication([])
+application = mywindow()
+application.show()
+sys.exit(app.exec())
+
+
