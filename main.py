@@ -44,17 +44,46 @@ class calculations():
     def db_read(self):
         for item in application.ui.tableView.selectedIndexes():
             self.selectedEngine = str(item.row()+1)
-
-    def db_calc(self):
         query = QtSql.QSqlQuery()
-        query.exec("SELECT * FROM engine WHERE Код = " + self.Selectedengine)
+        query.exec("SELECT * FROM engine WHERE Код = " + self.selectedEngine)
         while query.next():
             name = str(query.value(1))
-            Engines_Thrust = float(query.value(2)) * 0.001
-            Gas_Flow_Speed = float(query.value(3)) * 1000.0
-            Engines_Power = float(query.value(4)) * 1000.0
-            EFFICIENCY = float(query.value(5)) * 0.01
+            self.Engines_Thrust = float(query.value(2)) * 0.001
+            self.Gas_Flow_Speed = float(query.value(3)) * 1000.0
+            self.Engines_Power = float(query.value(4)) * 1000.0
+            self.EFFICIENCY = float(query.value(5)) * 0.01
             application.ui.lineEdit_23.setText(name)
+    def db_calc(self):
+
+        self.Start_Orbit_Radius = (6371 + self.Start_Orbit_Height) * 1000
+        self.Finnaly_Orbit_Radius = (6371 + self.Finally_Orbit_Height) * 1000
+        self.Initial_Speed = math.sqrt(self.Gravitation_Param / self.Start_Orbit_Radius)
+        self.Delta_velocity = self.Initial_Speed * math.sqrt(
+            1 - 2 * math.sqrt(self.Start_Orbit_Radius / self.Finnaly_Orbit_Radius) *
+            math.cos((math.pi / 2) * (self.Finally_Orbit_Inclination - self.Start_Orbit_Inclination)) +
+            (self.Start_Orbit_Radius / self.Finnaly_Orbit_Radius)
+        )
+        self.Gas_Mass = self.Start_SC_Mass * (
+                1 - math.exp((-self.Delta_velocity) / self.Gas_Flow_Speed)
+        )
+
+        self.Construct_Mass = self.Realitive_Construct_Mass * self.Start_SC_Mass
+        self.Engines_Mass = self.Engine_Specific_Mass * self.Engines_Thrust
+        self.Electro_Mass = self.Electro_Specific_Mass * self.Engines_Power
+        self.SSS_Mass = self.SSS_Realitive_Mass * self.Gas_Mass
+        self.Payload_Mass = (self.Start_SC_Mass
+                             - self.Gas_Mass
+                             - self.Construct_Mass
+                             - self.SSS_Mass
+                             - self.Engines_Mass
+                             - self.Electro_Mass)
+        foo = self.Gas_Mass / (3 * math.pi)
+        self.Tank_Radius = 100 * round(pow(foo, 1 / 3))
+        self.Tank_CTR = round(self.Tank_Radius * 1.5)
+        self.Body_lenght = round(500 * pow(self.Construct_Mass, 1 / 3))
+        self.SP_Square = 0.5 * self.Engines_Power / (1.3 * 0.29 * 0.866)
+        self.Payload_R = round(math.sqrt(self.Payload_Mass / (0.02 * 1.5 * math.pi)))
+        self.EnginesCount = round(self.Engines_Thrust)
     def calc_master(self):
         self.Fly_Time = float(application.ui.lineEdit.text()) * 86400
         self.Start_Orbit_Height = float(application.ui.lineEdit_4.text())
