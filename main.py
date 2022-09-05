@@ -54,7 +54,7 @@ class calculations():
             self.EFFICIENCY = float(query.value(5)) * 0.01
             application.ui.lineEdit_23.setText(name)
     def db_calc(self):
-
+        self.db_read()
         self.Start_Orbit_Radius = (6371 + self.Start_Orbit_Height) * 1000
         self.Finnaly_Orbit_Radius = (6371 + self.Finally_Orbit_Height) * 1000
         self.Initial_Speed = math.sqrt(self.Gravitation_Param / self.Start_Orbit_Radius)
@@ -107,7 +107,7 @@ class calculations():
             self.db_calc()
 
 
-
+        self.EFFICIENCY=round(self.EFFICIENCY,2)
         self.Initial_Speed = round(self.Initial_Speed, 3)
         self.Gas_Flow_Speed = round(self.Gas_Flow_Speed, 3)
         self.Electro_Mass = round(self.Electro_Mass, 3)
@@ -120,6 +120,7 @@ class calculations():
         self.Engines_Thrust = round(1000 * self.Engines_Thrust / 9.81, 3)
         self.Delta_velocity = round(self.Delta_velocity)
 
+        print(self.EFFICIENCY)
         application.ui.lineEdit_3.setText(str(self.EFFICIENCY * 100))
         application.ui.lineEdit_8.setText(str(self.Gas_Flow_Speed))
         application.ui.lineEdit_18.setText(str(self.Electro_Mass))
