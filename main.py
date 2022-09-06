@@ -39,7 +39,7 @@ class theorCalcClass():
         calcCore.EnginesCount = round(calcCore.Engines_Thrust)
 class databaseClass():
     def db_init(self, obj):
-
+        self.Payload_Mass = 0
         db = QtSql.QSqlDatabase.addDatabase("QODBC")
         db.setDatabaseName(
             "DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};FIL={MS Access};DSN='';DBQ=./engine.mdb")
@@ -62,7 +62,7 @@ class databaseClass():
                 self.selectedEngine = str(item.row() + 1)
 
         if application.ui.radioButton_3.isChecked():
-            self.selectedEngine = self.index
+            self.selectedEngine = str(self.index)
 
         query.exec("SELECT * FROM engine WHERE Код = " + self.selectedEngine)
         while query.next():
@@ -106,8 +106,15 @@ class databaseClass():
         calcCore.Payload_R = round(math.sqrt(calcCore.Payload_Mass / (0.02 * 1.5 * math.pi)))
         calcCore.EnginesCount = round(calcCore.Engines_Thrust)
 
-    #def optimize_calc(self):
-
+    def optimize_calc(self):
+        for i in range(18):
+            self.index = i+1
+            self.db_calc()
+            if calcCore.Payload_Mass > self.Payload_Mass:
+                self.Payload_Mass = calcCore.Payload_Mass
+                self.bestindex = self.index
+        self.index = self.bestindex
+        self.db_calc()
 
 
 
@@ -138,7 +145,8 @@ class calculations():
             theorCalc.theor_calc()
         if application.ui.radioButton_2.isChecked():
             database.db_calc()
-
+        if application.ui.radioButton_3.isChecked():
+            database.optimize_calc()
 
         self.EFFICIENCY = round(self.EFFICIENCY*100)
         self.Initial_Speed = round(self.Initial_Speed, 3)
