@@ -57,10 +57,14 @@ class databaseClass():
     def db_read(self):
         query = QtSql.QSqlQuery()
 
-        for item in application.ui.tableView.selectedIndexes():
-            self.selectedEngine = str(item.row() + 1)
-        query.exec("SELECT * FROM engine WHERE Код = " + self.selectedEngine)
 
+        for item in application.ui.tableView.selectedIndexes():
+                self.selectedEngine = str(item.row() + 1)
+
+        if application.ui.radioButton_3.isChecked():
+            self.selectedEngine = self.index
+
+        query.exec("SELECT * FROM engine WHERE Код = " + self.selectedEngine)
         while query.next():
             name = str(query.value(1))
             calcCore.Engines_Thrust = float(query.value(2)) * 0.001
@@ -71,7 +75,7 @@ class databaseClass():
 
 
     def db_calc(self):
-       # self.db_read()
+        self.db_read()
         calcCore.Start_Orbit_Radius = (6371 + calcCore.Start_Orbit_Height) * 1000
         calcCore.Finnaly_Orbit_Radius = (6371 + calcCore.Finally_Orbit_Height) * 1000
         calcCore.Initial_Speed = math.sqrt(calcCore.Gravitation_Param / calcCore.Start_Orbit_Radius)
@@ -103,6 +107,7 @@ class databaseClass():
         calcCore.EnginesCount = round(calcCore.Engines_Thrust)
 
     #def optimize_calc(self):
+
 
 
 
