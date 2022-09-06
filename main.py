@@ -59,6 +59,7 @@ class databaseClass():
 
         for item in application.ui.tableView.selectedIndexes():
             self.selectedEngine = str(item.row() + 1)
+            print(item.row())
         query.exec("SELECT * FROM engine WHERE Код = " + self.selectedEngine)
 
         while query.next():
@@ -176,7 +177,7 @@ class mywindow(QtWidgets.QMainWindow):
 
         self.ui.pushButton.clicked.connect(calcCore.calc_master)
         self.ui.pushButton_2.clicked.connect(self.MSG)
-        self.ui.tableView.doubleClicked.connect(database.db_read())
+        self.ui.tableView.doubleClicked.connect(database.db_read)
 
     def MSG(self):
         messg = QtWidgets.QMessageBox()
