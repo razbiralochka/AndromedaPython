@@ -38,21 +38,18 @@ class theorCalcClass():
         calcCore.Payload_R = round(math.sqrt(calcCore.Payload_Mass / (0.02 * 1.5 * math.pi)))
         calcCore.EnginesCount = round(calcCore.Engines_Thrust)
 class databaseClass():
-    def db_init(self, obj):
+    def __init__(self):
         self.Payload_Mass = 0
-        db = QtSql.QSqlDatabase.addDatabase("QODBC")
-        db.setDatabaseName(
+        self.db = QtSql.QSqlDatabase.addDatabase("QODBC")
+        self.db.setDatabaseName(
             "DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};FIL={MS Access};DSN='';DBQ=./engine.mdb")
-        if not db.open():
+        if not self.db.open():
             print('error db open')
             messg = QtWidgets.QMessageBox()
             messg.setWindowTitle("Ошибка открытия Базы Данных")
-            messg.setText(str(db.lastError))
+            messg.setText(str(self.db.lastError))
             x = messg.exec_()
-        self.model = QtSql.QSqlTableModel(obj, db)
-        self.model.setTable("engine")
-        self.model.select()
-        obj.ui.tableView.setModel(self.model)
+
 
     def db_read(self):
         query = QtSql.QSqlQuery()
@@ -185,7 +182,7 @@ class mywindow(QtWidgets.QMainWindow):
         super(mywindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        database.db_init(self)
+        self.db_model()
 
         self.ui.pushButton.clicked.connect(calcCore.calc_master)
         self.ui.pushButton_2.clicked.connect(self.MSG)
@@ -196,7 +193,11 @@ class mywindow(QtWidgets.QMainWindow):
         messg.setWindowTitle("О Программе")
         messg.setText("Хайруллин И.И.")
         x = messg.exec_()
-
+    def db_model(self):
+        self.model = QtSql.QSqlTableModel(self, database.db)
+        self.model.setTable("engine")
+        self.model.select()
+        self.ui.tableView.setModel(self.model)
 
 app = QtWidgets.QApplication([])
 
