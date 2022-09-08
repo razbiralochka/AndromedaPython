@@ -325,7 +325,7 @@ class Ui_MainWindow(object):
         self.label_17.setText(_translate("MainWindow", "Масса энергоустановки, кг"))
         self.label_9.setText(_translate("MainWindow", "Начальные параметры:"))
         self.label_18.setText(_translate("MainWindow", "Масса конструкции, кг"))
-        self.tableView.setToolTip(_translate("MainWindow", "<html><head/><body><p>Кликнув выбрать номер двигателя в колонке &quot;Код&quot;</p><p>Нажать Enter</p></body></html>"))
+        self.tableView.setToolTip(_translate("MainWindow", "<html><head/><body><p>Двойной клик для выбора</p><p>Нажать Enter</p></body></html>"))
         self.groupBox.setTitle(_translate("MainWindow", " Режим расчёта"))
         self.radioButton.setText(_translate("MainWindow", "Гипотетический"))
         self.radioButton_2.setText(_translate("MainWindow", "Выбор двигателя"))
