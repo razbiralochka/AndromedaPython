@@ -156,7 +156,6 @@ class calculations():
         self.EnginesCount = round(self.Engines_Thrust)
     def calc_master(self,mode):
 
-
         if mode==1:
             self.theor_calc()
         if mode==2:
