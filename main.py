@@ -23,12 +23,17 @@ class databaseClass():
             x = messg.exec_()
         else:
             self.__dbstate = True
+            self.query = QtSql.QSqlQuery()
 
     def getdbstate(self):
         return self.__dbstate
 
     def get_db(self):
         return self.__db
+
+    def getfromdb(self):
+        pass
+
 
 
 class calculations():
@@ -189,21 +194,26 @@ class mywindow(QtWidgets.QMainWindow):
         self.ui.tableView.doubleClicked.connect(self.readfromdatabase)
 
     def readfromdatabase(self):
-        query = QtSql.QSqlQuery()
+
         for item in self.ui.tableView.selectedIndexes():
             self.selectedEngine = str(item.row() + 1)
 
-            if self.ui.radioButton_3.isChecked():
-                self.selectedEngine = str(self.index)
+            print(self.ui.tableView.model().index(item.row() + 1, 1).data())
+            print(self.ui.tableView.model().index(item.row() + 1, 2).data())
+            print(self.ui.tableView.model().index(item.row() + 1, 3).data())
+            print(self.ui.tableView.model().index(item.row() + 1, 4).data())
+            print(self.ui.tableView.model().index(item.row() + 1, 5).data())
+            print(self.ui.tableView.model().index(item.row() + 1, 6).data())
 
-            query.exec("SELECT * FROM engine WHERE Код = " + self.selectedEngine)
-            while query.next():
-                name = str(query.value(1))
-                self.ui.lineEdit_8.setText(str(float(query.value(3)) * 1000.0))
-                self.ui.lineEdit_16.setText(str(float(query.value(2)) * 0.001))
-                self.ui.lineEdit_17.setText(str(float(query.value(4)) * 1000.0))
-                self.ui.lineEdit_3.setText(str(float(query.value(5))))
-                self.ui.lineEdit_23.setText(name)
+            # if self.ui.radioButton_3.isChecked():
+            #     self.selectedEngine = str(self.index)
+            #
+            # self.ui.lineEdit_8.setText(str(float(query.value(3)) * 1000.0))
+            # self.ui.lineEdit_16.setText(str(float(query.value(2)) * 0.001))
+            # self.ui.lineEdit_17.setText(str(float(query.value(4)) * 1000.0))
+            # self.ui.lineEdit_3.setText(str(float(query.value(5))))
+            self.ui.lineEdit_23.setText(self.ui.tableView.model().index(item.row() + 1, 1).data())
+
 
     def MSG(self):
         messg = QtWidgets.QMessageBox()
