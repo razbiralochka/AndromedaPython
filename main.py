@@ -32,10 +32,11 @@ class databaseClass():
         query.exec("SELECT * FROM engine WHERE Код = " + self.selectedEngine)
         while query.next():
             name = str(query.value(1))
-            calcCore.Engines_Thrust = float(query.value(2)) * 0.001
-            calcCore.Gas_Flow_Speed = float(query.value(3)) * 1000.0
-            calcCore.Engines_Power = float(query.value(4)) * 1000.0
-            calcCore.EFFICIENCY = float(query.value(5)) * 0.01
+            calcCore.set_Engines_Thrust(float(query.value(2)) * 0.001)
+            calcCore.set_Gas_Flow_Speed(float(query.value(3)) * 1000.0)
+            calcCore.set_Engines_Power(float(query.value(4)) * 1000.0)
+            calcCore.set_efficency(float(query.value(5)))
+
             application.ui.lineEdit_23.setText(name)
 
     def get_db(self):
@@ -45,7 +46,10 @@ class databaseClass():
 
 class calculations():
     Gravitation_Param = 398_600_000_000_000
-
+    def set_Engines_Power(self, val):
+        self.Engines_Power = val
+    def set_Engines_Thrust(self, val):
+        self.Engines_Thrust = val
     def set_Fly_Time(self, val):
         self.Fly_Time = float(val) * 86400
 
