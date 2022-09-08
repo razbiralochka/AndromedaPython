@@ -6,42 +6,29 @@ from pyqtgraph import PlotWidget
 from myform import Ui_MainWindow
 
 
+DBFILENAME = './engine.mdb'
+
+
 class databaseClass():
-    def __init__(self):
+    def __init__(self, dbfilename):
         self.__db = QtSql.QSqlDatabase.addDatabase("QODBC")
         self.__db.setDatabaseName(
-            "DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};FIL={MS Access};DSN='';DBQ=./engine.mdb")
+            "DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};FIL={MS Access};DSN='';DBQ=" + dbfilename)
+        self.__dbstate = False
         if not self.__db.open():
             print('error db open')
             messg = QtWidgets.QMessageBox()
             messg.setWindowTitle("Ошибка открытия Базы Данных")
             messg.setText(str(self.__db.lastError))
             x = messg.exec_()
+        else:
+            self.__dbstate = True
 
-
-    # def db_read(self):
-    #     query = QtSql.QSqlQuery()
-    #
-    #
-    #     for item in application.ui.tableView.selectedIndexes():
-    #             self.selectedEngine = str(item.row() + 1)
-    #
-    #     if application.ui.radioButton_3.isChecked():
-    #         self.selectedEngine = str(self.index)
-    #
-    #     query.exec("SELECT * FROM engine WHERE Код = " + self.selectedEngine)
-    #     while query.next():
-    #         name = str(query.value(1))
-    #         calcCore.set_Engines_Thrust(float(query.value(2)) * 0.001)
-    #         calcCore.set_Gas_Flow_Speed(float(query.value(3)) * 1000.0)
-    #         calcCore.set_Engines_Power(float(query.value(4)) * 1000.0)
-    #         calcCore.set_efficency(float(query.value(5)))
-    #
-    #         application.ui.lineEdit_23.setText(name)
+    def getdbstate(self):
+        return self.__dbstate
 
     def get_db(self):
         return self.__db
-
 
 
 class calculations():
@@ -184,17 +171,39 @@ class calculations():
 
 
 class mywindow(QtWidgets.QMainWindow):
-    def __init__(self, calcCore):
+    def __init__(self):
         super(mywindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        #self.db_model()
-
-        self.calcCore = calcCore
 
         self.ui.pushButton.clicked.connect(self.launch_calc)
         self.ui.pushButton_2.clicked.connect(self.MSG)
-        #self.ui.tableView.doubleClicked.connect(database.db_read)
+
+
+    def associateCalcCore(self, calcCore):
+        self.calcCore = calcCore
+
+    def associateDatabase(self, db):
+        self.db = db
+        self.db_model()
+        self.ui.tableView.doubleClicked.connect(self.readfromdatabase)
+
+    def readfromdatabase(self):
+        query = QtSql.QSqlQuery()
+        for item in self.ui.tableView.selectedIndexes():
+            self.selectedEngine = str(item.row() + 1)
+
+            if self.ui.radioButton_3.isChecked():
+                self.selectedEngine = str(self.index)
+
+            query.exec("SELECT * FROM engine WHERE Код = " + self.selectedEngine)
+            while query.next():
+                name = str(query.value(1))
+                self.ui.lineEdit_8.setText(str(float(query.value(3)) * 1000.0))
+                self.ui.lineEdit_16.setText(str(float(query.value(2)) * 0.001))
+                self.ui.lineEdit_17.setText(str(float(query.value(4)) * 1000.0))
+                self.ui.lineEdit_3.setText(str(float(query.value(5))))
+                self.ui.lineEdit_23.setText(name)
 
     def MSG(self):
         messg = QtWidgets.QMessageBox()
@@ -202,11 +211,12 @@ class mywindow(QtWidgets.QMainWindow):
         messg.setText("Хайруллин И.И.")
         x = messg.exec_()
 
-    # def db_model(self):
-    #     self.model = QtSql.QSqlTableModel(self, database.get_db())
-    #     self.model.setTable("engine")
-    #     self.model.select()
-    #     self.ui.tableView.setModel(self.model)
+    def db_model(self):
+        if self.db.getdbstate():
+            self.model = QtSql.QSqlTableModel(self, self.db.get_db())
+            self.model.setTable("engine")
+            self.model.select()
+            self.ui.tableView.setModel(self.model)
 
     def postresult(self):
         self.ui.lineEdit_3.setText(str(self.calcCore.EFFICIENCY))
@@ -275,10 +285,14 @@ class mywindow(QtWidgets.QMainWindow):
 
 def main():
     calcCore = calculations()
-    #database = databaseClass()
+    database = databaseClass(DBFILENAME)
+
     app = QtWidgets.QApplication([])
-    application = mywindow(calcCore)
+    application = mywindow()
+    application.associateCalcCore(calcCore)
+    application.associateDatabase(database)
     application.show()
+
     sys.exit(app.exec())
 
 
