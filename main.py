@@ -32,7 +32,7 @@ class databaseClass():
         query.exec("SELECT * FROM engine WHERE Код = " + self.selectedEngine)
         while query.next():
             name = str(query.value(1))
-            calcCore.set_Engines_Thrust(float(query.value(2)) * 0.001)
+            calcCore.set_Engines_Thrust(float(query.value(2)) * 0.000102)
             calcCore.set_Gas_Flow_Speed(float(query.value(3)) * 1000.0)
             calcCore.set_Engines_Power(float(query.value(4)) * 1000.0)
             calcCore.set_efficency(float(query.value(5)))
