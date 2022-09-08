@@ -46,6 +46,41 @@ class databaseClass():
 class calculations():
     Gravitation_Param = 398_600_000_000_000
 
+    def set_Fly_Time(self, val):
+        self.Fly_Time = float(val) * 86400
+
+    def set_Start_Orbit_Height(self, val):
+        self.Start_Orbit_Height = float(val)
+
+    def set_Start_Orbit_Inclination(self, val):
+        self.Start_Orbit_Inclination = float(val) * math.pi / 180
+
+    def set_Finally_Orbit_Height(self, val):
+        self.Finally_Orbit_Height = float(val)
+
+    def set_Finally_Orbit_Inclination(self, val):
+        self.Finally_Orbit_Inclination = float(val) * math.pi / 180
+
+    def set_Start_SC_Mass(self, val):
+        self.Start_SC_Mass = float(val)
+
+    def set_Realitive_Construct_Mass(self, val):
+        self.Realitive_Construct_Mass = float(val)
+
+    def set_SSS_Realitive_Mass(self, val):
+        self.SSS_Realitive_Mass = float(val)
+
+    def set_Gas_Flow_Speed(self, val):
+        self.Gas_Flow_Speed = float(val)
+
+    def set_Engine_Specific_Mass(self, val):
+        self.Engine_Specific_Mass = float(val)
+
+    def set_Electro_Specific_Mass(self, val):
+        self.Electro_Specific_Mass = float(val)
+
+    def set_efficency(self, val):
+        self.EFFICIENCY = float(val) * 0.01
     def db_calc(self):
         database.db_read()
         self.Start_Orbit_Radius = (6371 + self.Start_Orbit_Height) * 1000
@@ -119,28 +154,14 @@ class calculations():
         self.SP_Square = 0.5 * self.Engines_Power / (1.3 * 0.29 * 0.866)
         self.Payload_R = round(math.sqrt(self.Payload_Mass / (0.02 * 1.5 * math.pi)))
         self.EnginesCount = round(self.Engines_Thrust)
-    def calc_master(self):
-        self.Fly_Time = float(application.ui.lineEdit.text()) * 86400
-        self.Start_Orbit_Height = float(application.ui.lineEdit_4.text())
-        self.Start_Orbit_Inclination = float(application.ui.lineEdit_6.text()) * math.pi / 180
-        self.Finally_Orbit_Height = float(application.ui.lineEdit_5.text())
-        self.Finally_Orbit_Inclination = float(application.ui.lineEdit_7.text()) * math.pi / 180
-        self.Start_SC_Mass = float(application.ui.lineEdit_2.text())
-        self.Realitive_Construct_Mass = float(application.ui.lineEdit_12.text())
-        self.SSS_Realitive_Mass = float(application.ui.lineEdit_11.text())
-        self.Gas_Flow_Speed = float(application.ui.lineEdit_8.text())
-        self.Engine_Specific_Mass = float(application.ui.lineEdit_9.text())
-        self.Electro_Specific_Mass = float(application.ui.lineEdit_10.text())
-        self.EFFICIENCY = float(application.ui.lineEdit_3.text())
-        self.EFFICIENCY *= 0.01
+    def calc_master(self,mode):
 
 
-
-        if application.ui.radioButton.isChecked():
+        if mode==1:
             self.theor_calc()
-        if application.ui.radioButton_2.isChecked():
+        if mode==2:
             self.db_calc()
-        if application.ui.radioButton_3.isChecked():
+        if mode==3:
             self.optimize_calc()
 
         self.EFFICIENCY = round(self.EFFICIENCY*100)
@@ -181,7 +202,7 @@ class mywindow(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
         self.db_model()
 
-        self.ui.pushButton.clicked.connect(calcCore.calc_master)
+        self.ui.pushButton.clicked.connect(self.launch_calc)
         self.ui.pushButton_2.clicked.connect(self.MSG)
         self.ui.tableView.doubleClicked.connect(database.db_read)
 
@@ -196,6 +217,27 @@ class mywindow(QtWidgets.QMainWindow):
         self.model.select()
         self.ui.tableView.setModel(self.model)
 
+    def launch_calc(self):
+        calcCore.set_Fly_Time(self.ui.lineEdit.text())
+        calcCore.set_Start_Orbit_Height(self.ui.lineEdit_4.text())
+        calcCore.set_Start_Orbit_Inclination(self.ui.lineEdit_6.text())
+        calcCore.set_Finally_Orbit_Height(self.ui.lineEdit_5.text())
+        calcCore.set_Finally_Orbit_Inclination(self.ui.lineEdit_7.text())
+        calcCore.set_Start_SC_Mass(self.ui.lineEdit_2.text())
+        calcCore.set_Realitive_Construct_Mass(self.ui.lineEdit_12.text())
+        calcCore.set_SSS_Realitive_Mass(self.ui.lineEdit_11.text())
+        calcCore.set_Gas_Flow_Speed(self.ui.lineEdit_8.text())
+        calcCore.set_Engine_Specific_Mass(self.ui.lineEdit_9.text())
+        calcCore.set_Electro_Specific_Mass(self.ui.lineEdit_10.text())
+        calcCore.set_efficency(self.ui.lineEdit_3.text())
+
+        if self.ui.radioButton.isChecked():
+            mode = 1
+        if self.ui.radioButton_2.isChecked():
+            mode = 2
+        if self.ui.radioButton_3.isChecked():
+            mode = 3
+        calcCore.calc_master(mode)
 app = QtWidgets.QApplication([])
 
 
