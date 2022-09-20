@@ -6,7 +6,7 @@ from myform import Ui_MainWindow
 # from pyqtgraph import PlotWidget
 
 from Database import Database
-from Calculation import calculations
+from Calculation import Calculations
 
 
 DBFILENAME = './engine.mdb'
@@ -64,17 +64,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def postresult(self):
         self.ui.lineEdit_3.setText(str(self.calcCore.EFFICIENCY))
-        self.ui.lineEdit_8.setText(str(self.calcCore.Gas_Flow_Speed))
+        self.ui.lineEdit_8.setText(str(self.calcCore.gas_flow_speed))
         self.ui.lineEdit_18.setText(str(self.calcCore.Electro_Mass))
         self.ui.lineEdit_22.setText(str(self.calcCore.Payload_Mass))
         self.ui.lineEdit_21.setText(str(self.calcCore.SSS_Mass))
         self.ui.lineEdit_19.setText(str(self.calcCore.Engines_Mass))
         self.ui.lineEdit_20.setText(str(self.calcCore.Construct_Mass))
-        self.ui.lineEdit_17.setText(str(self.calcCore.Engines_Power / 1000))
-        self.ui.lineEdit_16.setText(str(self.calcCore.Engines_Thrust))
-        self.ui.lineEdit_15.setText(str(self.calcCore.Gas_Mass))
-        self.ui.lineEdit_14.setText(str(self.calcCore.Delta_velocity / 1000))
-        self.ui.lineEdit_13.setText(str(self.calcCore.Initial_Speed / 1000))
+        self.ui.lineEdit_17.setText(str(self.calcCore.engine_power / 1000))
+        self.ui.lineEdit_16.setText(str(self.calcCore.engine_thrust))
+        self.ui.lineEdit_15.setText(str(self.calcCore.gas_mass))
+        self.ui.lineEdit_14.setText(str(self.calcCore.speed_delta / 1000))
+        self.ui.lineEdit_13.setText(str(self.calcCore.speed_initial / 1000))
 
     def launch_calc(self):
         self.calcCore.set_Fly_Time(
@@ -84,7 +84,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.calcCore.set_Start_Orbit_Height(
             float(self.ui.lineEdit_4.text())
         )
-        self.calcCore.set_Start_Orbit_Inclination(
+        self.calcCore.set_orbit_inclination_start(
             float(self.ui.lineEdit_6.text())
         )
         self.calcCore.set_Finally_Orbit_Height(
@@ -137,7 +137,7 @@ def main():
         msg.setText(str(database.get_last_error()))
         msg.exec_()
 
-    calc_core = calculations()
+    calc_core = Calculations()
 
     application = MainWindow()
     if database.getdbstate():
