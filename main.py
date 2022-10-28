@@ -2,7 +2,7 @@ import sys
 import math
 import numpy as np
 import pyqtgraph as pg
-from PyQt5 import QtWidgets, QtSql
+from PyQt5 import QtWidgets, QtSql, QtCore
 from pyqtgraph import PlotWidget
 from myform import Ui_MainWindow
 
@@ -16,10 +16,8 @@ class RungeKuttaClass():
         self.time = float()
         self.radius = float()
         self.inc = float()
-        self.u_ang = float()
-        self.vel= float()
-
-
+        self.u_ang = 0
+        self.vel= 0
 
     def f_psi(self):
         U_ANG = self.u_ang
@@ -34,16 +32,16 @@ class RungeKuttaClass():
                             math.sqrt(R_F/R_0)-V_X/VEL_0*
                             math.sqrt(1-2*math.cos(math.pi*(INC_F-INC_0)/2)/
                             math.sqrt(R_F/R_0)+R_0/R_F)))
-        res = float()
+
         if INC_F < INC_0:
             if (psi_max < 0):
                 res = psi_max*np.sign(math.cos(U_ANG))
-            else:
+            if (psi_max > 0):
                 res = (psi_max - math.pi)*np.sign(math.cos(U_ANG))
-        else:
+        if  INC_F > INC_0:
             if (psi_max > 0):
                 res = psi_max*np.sign(math.cos(U_ANG))
-            else:
+            if (psi_max < 0):
                 res = (psi_max + math.pi)*np.sign(math.cos(U_ANG))
         return res
 
@@ -56,7 +54,7 @@ class RungeKuttaClass():
     def z_acc(self):
         INITIAL_ACCELERATION = calcCore.Engines_Thrust / calcCore.Start_SC_Mass
 
-        res = -INITIAL_ACCELERATION*math.cos(self.f_psi())*\
+        res = INITIAL_ACCELERATION*math.sin(self.f_psi())*\
               math.exp(self.vel/calcCore.Gas_Flow_Speed)
         return res
 
@@ -68,6 +66,7 @@ class RungeKuttaClass():
     def di(self, t, r, inc, u_ang, vel):
         res = self.z_acc()*math.sqrt(self.radius/self.Gravitation_Param)*\
               math.cos(u_ang)
+
         return res
 
     def du(self, t, r, inc, u_ang, vel):
@@ -87,6 +86,7 @@ class RungeKuttaClass():
         k = np.zeros((4, 4))
         h = 100
         while self.time < calcCore.Fly_Time:
+
             k[0][0] = h * self.dr(self.time, self.radius, self.inc, self.u_ang, self.vel)
             k[1][0] = h * self.di(self.time, self.radius, self.inc, self.u_ang, self.vel)
             k[2][0] = h * self.du(self.time, self.radius, self.inc, self.u_ang, self.vel)
@@ -124,8 +124,16 @@ class RungeKuttaClass():
             self.inc += (k[1][0]+2.0*k[1][1]+2.0*k[1][2]+k[1][3])/6.0
             self.u_ang += (k[2][0]+2.0*k[2][1]+2.0*k[2][2]+k[2][3])/6.0
             self.vel += (k[3][0]+2.0*k[3][1]+2.0*k[3][2]+k[3][3])/6.0
+        pen = pg.mkPen(color=(0, 0, 0), width=2)
+        application.ui.widget_2.plotItem.plot(self.t_list , self.inc_list ,pen=pen)
+        application.ui.widget_3.plotItem.plot(self.t_list , self.r_list, pen=pen)
+        self.inc = round(180*self.inc/math.pi, 2)
+        self.radius = round(self.radius/1000 , 2)
 
-        print('ready')
+        application.ui.label_31.setText("Зависимость наклонения орбиты (град) от времени (сут). Конечное наклонение: "
+                                        + str(self.inc) + " град")
+        application.ui.label_32.setText("Зависимость радиуса орбиты (км) от времени (сут). Конечный радиус: "
+                                        + str(self.radius)+ " км")
 
 
 
@@ -305,7 +313,10 @@ class mywindow(QtWidgets.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         database.db_init(self)
-
+        self.ui.widget_2.setBackground('w')
+        self.ui.widget_2.showGrid(x=True, y=True)
+        self.ui.widget_3.setBackground('w')
+        self.ui.widget_3.showGrid(x=True, y=True)
         self.ui.pushButton.clicked.connect(calcCore.calc_master)
         self.ui.pushButton_2.clicked.connect(self.MSG)
         self.ui.tableView.doubleClicked.connect(self.read_from_table)
