@@ -6,162 +6,147 @@ from pyqtgraph import PlotWidget
 from myform import Ui_MainWindow
 
 
-DBFILENAME = './engine.mdb'
+class theorCalcClass():
+    def theor_calc(self):
+        calcCore.Start_Orbit_Radius = (6371 + calcCore.Start_Orbit_Height) * 1000
+        calcCore.Finnaly_Orbit_Radius = (6371 + calcCore.Finally_Orbit_Height) * 1000
+        calcCore.Initial_Speed = math.sqrt(calcCore.Gravitation_Param / calcCore.Start_Orbit_Radius)
+        calcCore.Delta_velocity = calcCore.Initial_Speed * math.sqrt(
+            1 - 2 * math.sqrt(calcCore.Start_Orbit_Radius / calcCore.Finnaly_Orbit_Radius) *
+            math.cos((math.pi / 2) * (calcCore.Finally_Orbit_Inclination - calcCore.Start_Orbit_Inclination)) +
+            (calcCore.Start_Orbit_Radius / calcCore.Finnaly_Orbit_Radius)
+        )
+        calcCore.Gas_Mass = calcCore.Start_SC_Mass * (
+                1 - math.exp((-calcCore.Delta_velocity) / calcCore.Gas_Flow_Speed)
+        )
+        calcCore.Engines_Thrust = (calcCore.Gas_Flow_Speed * calcCore.Gas_Mass) / calcCore.Fly_Time
+        calcCore.Engines_Power = (calcCore.Engines_Thrust * calcCore.Gas_Flow_Speed) / (2 * calcCore.EFFICIENCY)
+        calcCore.Construct_Mass = calcCore.Realitive_Construct_Mass * calcCore.Start_SC_Mass
+        calcCore.Engines_Mass = calcCore.Engine_Specific_Mass * calcCore.Engines_Thrust
+        calcCore.Electro_Mass = calcCore.Electro_Specific_Mass * calcCore.Engines_Power
+        calcCore.SSS_Mass = calcCore.SSS_Realitive_Mass * calcCore.Gas_Mass
+        calcCore.Payload_Mass = (calcCore.Start_SC_Mass
+                                 - calcCore.Gas_Mass
+                                 - calcCore.Construct_Mass
+                                 - calcCore.SSS_Mass
+                                 - calcCore.Engines_Mass
+                                 - calcCore.Electro_Mass)
+        foo = calcCore.Gas_Mass / (3 * math.pi)
+        calcCore.Tank_Radius = 100 * round(pow(foo, 1 / 3))
+        calcCore.Tank_CTR = round(calcCore.Tank_Radius * 1.5)
+        calcCore.Body_lenght = round(500 * pow(calcCore.Construct_Mass, 1 / 3))
+        calcCore.SP_Square = 0.5 * calcCore.Engines_Power / (1.3 * 0.29 * 0.866)
+        calcCore.Payload_R = round(math.sqrt(calcCore.Payload_Mass / (0.02 * 1.5 * math.pi)))
+        calcCore.EnginesCount = round(calcCore.Engines_Thrust)
 
 
 class databaseClass():
-    def __init__(self, dbfilename):
-        self.__db = QtSql.QSqlDatabase.addDatabase("QODBC")
-        self.__db.setDatabaseName(
-            "DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};FIL={MS Access};DSN='';DBQ=" + dbfilename)
-        self.__dbstate = False
-        if not self.__db.open():
+    def db_init(self, obj):
+
+        db = QtSql.QSqlDatabase.addDatabase("QODBC")
+        db.setDatabaseName(
+            "DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};FIL={MS Access};DSN='';DBQ=./engine.mdb")
+        if not db.open():
             print('error db open')
             messg = QtWidgets.QMessageBox()
             messg.setWindowTitle("Ошибка открытия Базы Данных")
-            messg.setText(str(self.__db.lastError))
+            messg.setText(str(db.lastError))
             x = messg.exec_()
-        else:
-            self.__dbstate = True
-            self.query = QtSql.QSqlQuery()
+        self.model = QtSql.QSqlTableModel(obj, db)
+        self.model.setTable("engine")
+        self.model.select()
+        self.selectedEngine = 0
+        obj.ui.tableView.setModel(self.model)
 
-    def getdbstate(self):
-        return self.__dbstate
+    def db_read(self):
+        query = QtSql.QSqlQuery()
 
-    def get_db(self):
-        return self.__db
+        self.selectedEngine = str(self.selectedEngine)
+        query.exec("SELECT * FROM engine WHERE Код = " + self.selectedEngine)
 
-    def getfromdb(self):
-        pass
+        while query.next():
+            name = str(query.value(1))
+            calcCore.Engines_Thrust = float(query.value(2)) * 0.001
+            calcCore.Gas_Flow_Speed = float(query.value(3)) * 1000.0
+            calcCore.Engines_Power = float(query.value(4)) * 1000.0
+            calcCore.EFFICIENCY = float(query.value(5)) * 0.01
+            application.ui.lineEdit_23.setText(name)
 
+    def db_calc(self):
+
+        calcCore.Start_Orbit_Radius = (6371 + calcCore.Start_Orbit_Height) * 1000
+        calcCore.Finnaly_Orbit_Radius = (6371 + calcCore.Finally_Orbit_Height) * 1000
+        calcCore.Initial_Speed = math.sqrt(calcCore.Gravitation_Param / calcCore.Start_Orbit_Radius)
+        calcCore.Delta_velocity = calcCore.Initial_Speed * math.sqrt(
+            1 - 2 * math.sqrt(calcCore.Start_Orbit_Radius / calcCore.Finnaly_Orbit_Radius) *
+            math.cos((math.pi / 2) * (calcCore.Finally_Orbit_Inclination - calcCore.Start_Orbit_Inclination)) +
+            (calcCore.Start_Orbit_Radius / calcCore.Finnaly_Orbit_Radius)
+        )
+        calcCore.Gas_Mass = calcCore.Start_SC_Mass * (
+                1 - math.exp((-calcCore.Delta_velocity) / calcCore.Gas_Flow_Speed)
+        )
+
+        calcCore.Construct_Mass = calcCore.Realitive_Construct_Mass * calcCore.Start_SC_Mass
+        calcCore.Engines_Mass = calcCore.Engine_Specific_Mass * calcCore.Engines_Thrust
+        calcCore.Electro_Mass = calcCore.Electro_Specific_Mass * calcCore.Engines_Power
+        calcCore.SSS_Mass = calcCore.SSS_Realitive_Mass * calcCore.Gas_Mass
+        calcCore.Payload_Mass = (calcCore.Start_SC_Mass
+                                 - calcCore.Gas_Mass
+                                 - calcCore.Construct_Mass
+                                 - calcCore.SSS_Mass
+                                 - calcCore.Engines_Mass
+                                 - calcCore.Electro_Mass)
+        foo = calcCore.Gas_Mass / (3 * math.pi)
+        calcCore.Tank_Radius = 100 * round(pow(foo, 1 / 3))
+        calcCore.Tank_CTR = round(calcCore.Tank_Radius * 1.5)
+        calcCore.Body_lenght = round(500 * pow(calcCore.Construct_Mass, 1 / 3))
+        calcCore.SP_Square = 0.5 * calcCore.Engines_Power / (1.3 * 0.29 * 0.866)
+        calcCore.Payload_R = round(math.sqrt(calcCore.Payload_Mass / (0.02 * 1.5 * math.pi)))
+        calcCore.EnginesCount = round(calcCore.Engines_Thrust)
+
+    def optimize_calc(self):
+        best = 0
+        max_layload = 0
+        for i in range(18):
+            self.selectedEngine = i + 1
+            self.db_read()
+            self.db_calc()
+            if calcCore.Payload_Mass > max_layload:
+                max_layload = calcCore.Payload_Mass
+                best = i
+
+        self.selectedEngine = best + 1
+        self.db_read()
+        self.db_calc()
 
 
 class calculations():
     Gravitation_Param = 398_600_000_000_000
-    def set_Engines_Power(self, val):
-        self.Engines_Power = val
-    def set_Engines_Thrust(self, val):
-        self.Engines_Thrust = val
-    def set_Fly_Time(self, val):
-        self.Fly_Time = val * 86400
 
-    def set_Start_Orbit_Height(self, val):
-        self.Start_Orbit_Height = val
+    def calc_master(self):
+        self.Fly_Time = float(application.ui.lineEdit.text()) * 86400
+        self.Start_Orbit_Height = float(application.ui.lineEdit_4.text())
+        self.Start_Orbit_Inclination = float(application.ui.lineEdit_6.text()) * math.pi / 180
+        self.Finally_Orbit_Height = float(application.ui.lineEdit_5.text())
+        self.Finally_Orbit_Inclination = float(application.ui.lineEdit_7.text()) * math.pi / 180
+        self.Start_SC_Mass = float(application.ui.lineEdit_2.text())
+        self.Realitive_Construct_Mass = float(application.ui.lineEdit_12.text())
+        self.SSS_Realitive_Mass = float(application.ui.lineEdit_11.text())
+        self.Gas_Flow_Speed = float(application.ui.lineEdit_8.text())
+        self.Engine_Specific_Mass = float(application.ui.lineEdit_9.text())
+        self.Electro_Specific_Mass = float(application.ui.lineEdit_10.text())
+        self.EFFICIENCY = float(application.ui.lineEdit_3.text())
+        self.EFFICIENCY *= 0.01
 
-    def set_Start_Orbit_Inclination(self, val):
-        self.Start_Orbit_Inclination = val * math.pi / 180
+        if application.ui.radioButton.isChecked():
+            theorCalc.theor_calc()
+        if application.ui.radioButton_2.isChecked():
+            database.db_read()
+            database.db_calc()
+        if application.ui.radioButton_3.isChecked():
+            database.optimize_calc()
 
-    def set_Finally_Orbit_Height(self, val):
-        self.Finally_Orbit_Height = val
-
-    def set_Finally_Orbit_Inclination(self, val):
-        self.Finally_Orbit_Inclination = val * math.pi / 180
-
-    def set_Start_SC_Mass(self, val):
-        self.Start_SC_Mass = val
-
-    def set_Realitive_Construct_Mass(self, val):
-        self.Realitive_Construct_Mass = val
-
-    def set_SSS_Realitive_Mass(self, val):
-        self.SSS_Realitive_Mass = val
-
-    def set_Gas_Flow_Speed(self, val):
-        self.Gas_Flow_Speed = val
-
-    def set_Engine_Specific_Mass(self, val):
-        self.Engine_Specific_Mass = val
-
-    def set_Electro_Specific_Mass(self, val):
-        self.Electro_Specific_Mass = val
-
-    def set_efficency(self, val):
-        self.EFFICIENCY = val * 0.01
-
-    def db_calc(self):
-        self.database.db_read()
-        self.Start_Orbit_Radius = (6371 + self.Start_Orbit_Height) * 1000
-        self.Finnaly_Orbit_Radius = (6371 + self.Finally_Orbit_Height) * 1000
-        self.Initial_Speed = math.sqrt(self.Gravitation_Param / self.Start_Orbit_Radius)
-        self.Delta_velocity = self.Initial_Speed * math.sqrt(
-            1 - 2 * math.sqrt(self.Start_Orbit_Radius / self.Finnaly_Orbit_Radius) *
-            math.cos((math.pi / 2) * (self.Finally_Orbit_Inclination - self.Start_Orbit_Inclination)) +
-            (self.Start_Orbit_Radius / self.Finnaly_Orbit_Radius)
-        )
-        self.Gas_Mass = self.Start_SC_Mass * (
-                1 - math.exp((-self.Delta_velocity) / self.Gas_Flow_Speed)
-        )
-
-        self.Construct_Mass = self.Realitive_Construct_Mass * self.Start_SC_Mass
-        self.Engines_Mass = self.Engine_Specific_Mass * self.Engines_Thrust
-        self.Electro_Mass = self.Electro_Specific_Mass * self.Engines_Power
-        self.SSS_Mass = self.SSS_Realitive_Mass * self.Gas_Mass
-        self.Payload_Mass = (self.Start_SC_Mass
-                             - self.Gas_Mass
-                             - self.Construct_Mass
-                             - self.SSS_Mass
-                             - self.Engines_Mass
-                             - self.Electro_Mass)
-        foo = self.Gas_Mass / (3 * math.pi)
-        self.Tank_Radius = 100 * round(pow(foo, 1 / 3))
-        self.Tank_CTR = round(self.Tank_Radius * 1.5)
-        self.Body_lenght = round(500 * pow(self.Construct_Mass, 1 / 3))
-        self.SP_Square = 0.5 * self.Engines_Power / (1.3 * 0.29 * 0.866)
-        self.Payload_R = round(math.sqrt(self.Payload_Mass / (0.02 * 1.5 * math.pi)))
-        self.EnginesCount = round(self.Engines_Thrust)
-
-    def optimize_calc(self):
-        pl_mass=0
-        for i in range(18):
-            database.index = i+1
-            self.db_calc()
-            if self.Payload_Mass > pl_mass:
-                pl_mass = self.Payload_Mass
-                bestindex = database.index
-        database.index = bestindex
-        self.db_calc()
-
-    def theor_calc(self):
-        self.Start_Orbit_Radius = (6371 + self.Start_Orbit_Height) * 1000
-        self.Finnaly_Orbit_Radius = (6371 + self.Finally_Orbit_Height) * 1000
-        self.Initial_Speed = math.sqrt(self.Gravitation_Param / self.Start_Orbit_Radius)
-        self.Delta_velocity = self.Initial_Speed * math.sqrt(
-            1 - 2 * math.sqrt(self.Start_Orbit_Radius / self.Finnaly_Orbit_Radius) *
-            math.cos((math.pi / 2) * (self.Finally_Orbit_Inclination - self.Start_Orbit_Inclination)) +
-            (self.Start_Orbit_Radius / self.Finnaly_Orbit_Radius)
-        )
-        self.Gas_Mass = self.Start_SC_Mass * (
-                1 - math.exp((-self.Delta_velocity) / self.Gas_Flow_Speed)
-        )
-        self.Engines_Thrust = (self.Gas_Flow_Speed * self.Gas_Mass) / self.Fly_Time
-        self.Engines_Power = (self.Engines_Thrust * self.Gas_Flow_Speed) / (2 * self.EFFICIENCY)
-        self.Construct_Mass = self.Realitive_Construct_Mass * self.Start_SC_Mass
-        self.Engines_Mass = self.Engine_Specific_Mass * self.Engines_Thrust
-        self.Electro_Mass = self.Electro_Specific_Mass * self.Engines_Power
-        self.SSS_Mass = self.SSS_Realitive_Mass * self.Gas_Mass
-        self.Payload_Mass = (self.Start_SC_Mass
-                             - self.Gas_Mass
-                             - self.Construct_Mass
-                             - self.SSS_Mass
-                             - self.Engines_Mass
-                             - self.Electro_Mass)
-        foo = self.Gas_Mass / (3 * math.pi)
-        self.Tank_Radius = 100 * round(pow(foo, 1 / 3))
-        self.Tank_CTR = round(self.Tank_Radius * 1.5)
-        self.Body_lenght = round(500 * pow(self.Construct_Mass, 1 / 3))
-        self.SP_Square = 0.5 * self.Engines_Power / (1.3 * 0.29 * 0.866)
-        self.Payload_R = round(math.sqrt(self.Payload_Mass / (0.02 * 1.5 * math.pi)))
-        self.EnginesCount = round(self.Engines_Thrust)
-
-    def calc_master(self, mode):
-        if mode == 1:
-            self.theor_calc()
-        elif mode == 2:
-            self.db_calc()
-        elif mode == 3:
-            self.optimize_calc()
-
-        self.EFFICIENCY = round(self.EFFICIENCY*100)
+        self.EFFICIENCY = round(self.EFFICIENCY * 100)
         self.Initial_Speed = round(self.Initial_Speed, 3)
         self.Gas_Flow_Speed = round(self.Gas_Flow_Speed, 3)
         self.Electro_Mass = round(self.Electro_Mass, 3)
@@ -174,44 +159,40 @@ class calculations():
         self.Engines_Thrust = round(1000 * self.Engines_Thrust / 9.81, 3)
         self.Delta_velocity = round(self.Delta_velocity)
 
+        application.ui.lineEdit_3.setText(str(self.EFFICIENCY))
+        application.ui.lineEdit_8.setText(str(self.Gas_Flow_Speed))
+        application.ui.lineEdit_18.setText(str(self.Electro_Mass))
+        application.ui.lineEdit_22.setText(str(self.Payload_Mass))
+        application.ui.lineEdit_21.setText(str(self.SSS_Mass))
+        application.ui.lineEdit_19.setText(str(self.Engines_Mass))
+        application.ui.lineEdit_20.setText(str(self.Construct_Mass))
+        application.ui.lineEdit_17.setText(str(self.Engines_Power / 1000))
+        application.ui.lineEdit_16.setText(str(self.Engines_Thrust))
+        application.ui.lineEdit_15.setText(str(self.Gas_Mass))
+        application.ui.lineEdit_14.setText(str(self.Delta_velocity / 1000))
+        application.ui.lineEdit_13.setText(str(self.Initial_Speed / 1000))
+
+
+calcCore = calculations()
+theorCalc = theorCalcClass()
+database = databaseClass()
+
 
 class mywindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(mywindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        database.db_init(self)
 
-        self.ui.pushButton.clicked.connect(self.launch_calc)
+        self.ui.pushButton.clicked.connect(calcCore.calc_master)
         self.ui.pushButton_2.clicked.connect(self.MSG)
+        self.ui.tableView.doubleClicked.connect(self.read_from_table)
 
-
-    def associateCalcCore(self, calcCore):
-        self.calcCore = calcCore
-
-    def associateDatabase(self, db):
-        self.db = db
-        self.db_model()
-        self.ui.tableView.doubleClicked.connect(self.readfromdatabase)
-
-    def readfromdatabase(self):
-
+    def read_from_table(self):
         for item in self.ui.tableView.selectedIndexes():
-            self.selectedEngine = str(item.row() + 1)
-
-            print(self.ui.tableView.model().index(item.row() , 1).data())
-            print(self.ui.tableView.model().index(item.row() , 2).data())
-            print(self.ui.tableView.model().index(item.row() , 3).data())
-            print(self.ui.tableView.model().index(item.row() , 4).data())
-            print(self.ui.tableView.model().index(item.row() , 5).data())
-            print(self.ui.tableView.model().index(item.row() , 6).data())
-
-            self.ui.lineEdit_16.setText(str(self.ui.tableView.model().index(item.row() , 2).data()))
-            buf = float(self.ui.tableView.model().index(item.row() , 3).data())*1000
-            self.ui.lineEdit_8.setText(str(buf))
-            self.ui.lineEdit_17.setText(str(self.ui.tableView.model().index(item.row() , 4).data()))
-            self.ui.lineEdit_3.setText(str(self.ui.tableView.model().index(item.row() , 5).data()))
-            self.ui.lineEdit_23.setText(self.ui.tableView.model().index(item.row() , 1).data())
-
+            database.selectedEngine = str(item.row() + 1)
+            print(item.row() + 1)
 
     def MSG(self):
         messg = QtWidgets.QMessageBox()
@@ -219,90 +200,10 @@ class mywindow(QtWidgets.QMainWindow):
         messg.setText("Хайруллин И.И.")
         x = messg.exec_()
 
-    def db_model(self):
-        if self.db.getdbstate():
-            self.model = QtSql.QSqlTableModel(self, self.db.get_db())
-            self.model.setTable("engine")
-            self.model.select()
-            self.ui.tableView.setModel(self.model)
 
-    def postresult(self):
-        self.ui.lineEdit_3.setText(str(self.calcCore.EFFICIENCY))
-        self.ui.lineEdit_8.setText(str(self.calcCore.Gas_Flow_Speed))
-        self.ui.lineEdit_18.setText(str(self.calcCore.Electro_Mass))
-        self.ui.lineEdit_22.setText(str(self.calcCore.Payload_Mass))
-        self.ui.lineEdit_21.setText(str(self.calcCore.SSS_Mass))
-        self.ui.lineEdit_19.setText(str(self.calcCore.Engines_Mass))
-        self.ui.lineEdit_20.setText(str(self.calcCore.Construct_Mass))
-        self.ui.lineEdit_17.setText(str(self.calcCore.Engines_Power / 1000))
-        self.ui.lineEdit_16.setText(str(self.calcCore.Engines_Thrust))
-        self.ui.lineEdit_15.setText(str(self.calcCore.Gas_Mass))
-        self.ui.lineEdit_14.setText(str(self.calcCore.Delta_velocity / 1000))
-        self.ui.lineEdit_13.setText(str(self.calcCore.Initial_Speed / 1000))
+app = QtWidgets.QApplication([])
 
+application = mywindow()
 
-    def launch_calc(self):
-        self.calcCore.set_Fly_Time(
-            float(self.ui.lineEdit.text())
-        )
-
-        self.calcCore.set_Start_Orbit_Height(
-            float(self.ui.lineEdit_4.text())
-        )
-        self.calcCore.set_Start_Orbit_Inclination(
-            float(self.ui.lineEdit_6.text())
-        )
-        self.calcCore.set_Finally_Orbit_Height(
-            float(self.ui.lineEdit_5.text())
-        )
-        self.calcCore.set_Finally_Orbit_Inclination(
-            float(self.ui.lineEdit_7.text())
-        )
-        self.calcCore.set_Start_SC_Mass(
-            float(self.ui.lineEdit_2.text())
-        )
-        self.calcCore.set_Realitive_Construct_Mass(
-            float(self.ui.lineEdit_12.text())
-        )
-        self.calcCore.set_SSS_Realitive_Mass(
-            float(self.ui.lineEdit_11.text())
-        )
-        self.calcCore.set_Gas_Flow_Speed(
-            float(self.ui.lineEdit_8.text())
-        )
-        self.calcCore.set_Engine_Specific_Mass(
-            float(self.ui.lineEdit_9.text())
-        )
-        self.calcCore.set_Electro_Specific_Mass(
-            float(self.ui.lineEdit_10.text())
-        )
-        self.calcCore.set_efficency(
-            float(self.ui.lineEdit_3.text())
-        )
-
-        if self.ui.radioButton.isChecked():
-            mode = 1
-        if self.ui.radioButton_2.isChecked():
-            mode = 2
-        if self.ui.radioButton_3.isChecked():
-            mode = 3
-        self.calcCore.calc_master(mode)
-
-        self.postresult()
-
-
-def main():
-    calcCore = calculations()
-    database = databaseClass(DBFILENAME)
-
-    app = QtWidgets.QApplication([])
-    application = mywindow()
-    application.associateCalcCore(calcCore)
-    application.associateDatabase(database)
-    application.show()
-
-    sys.exit(app.exec())
-
-
-if __name__ == '__main__':
-    main()
+application.show()
+sys.exit(app.exec())
