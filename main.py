@@ -52,14 +52,13 @@ class databaseClass():
         self.model = QtSql.QSqlTableModel(obj, db)
         self.model.setTable("engine")
         self.model.select()
+        self.selectedEngine = 0
         obj.ui.tableView.setModel(self.model)
 
     def db_read(self):
         query = QtSql.QSqlQuery()
 
-        for item in application.ui.tableView.selectedIndexes():
-            self.selectedEngine = str(item.row() + 1)
-            print(item.row())
+        self.selectedEngine = str(self.selectedEngine)
         query.exec("SELECT * FROM engine WHERE Код = " + self.selectedEngine)
 
         while query.next():
@@ -72,7 +71,7 @@ class databaseClass():
 
 
     def db_calc(self):
-       # self.db_read()
+
         calcCore.Start_Orbit_Radius = (6371 + calcCore.Start_Orbit_Height) * 1000
         calcCore.Finnaly_Orbit_Radius = (6371 + calcCore.Finally_Orbit_Height) * 1000
         calcCore.Initial_Speed = math.sqrt(calcCore.Gravitation_Param / calcCore.Start_Orbit_Radius)
@@ -103,8 +102,20 @@ class databaseClass():
         calcCore.Payload_R = round(math.sqrt(calcCore.Payload_Mass / (0.02 * 1.5 * math.pi)))
         calcCore.EnginesCount = round(calcCore.Engines_Thrust)
 
-    #def optimize_calc(self):
+    def optimize_calc(self):
+        best = 0
+        max_layload = 0
+        for i in range(18):
+            self.selectedEngine=i+1
+            self.db_read()
+            self.db_calc()
+            if calcCore.Payload_Mass > max_layload:
+                max_layload = calcCore.Payload_Mass
+                best = i
 
+        self.selectedEngine = best + 1
+        self.db_read()
+        self.db_calc()
 
 
 
@@ -133,8 +144,10 @@ class calculations():
         if application.ui.radioButton.isChecked():
             theorCalc.theor_calc()
         if application.ui.radioButton_2.isChecked():
+            database.db_read()
             database.db_calc()
-
+        if application.ui.radioButton_3.isChecked():
+            database.optimize_calc()
 
         self.EFFICIENCY = round(self.EFFICIENCY*100)
         self.Initial_Speed = round(self.Initial_Speed, 3)
@@ -177,7 +190,12 @@ class mywindow(QtWidgets.QMainWindow):
 
         self.ui.pushButton.clicked.connect(calcCore.calc_master)
         self.ui.pushButton_2.clicked.connect(self.MSG)
-        self.ui.tableView.doubleClicked.connect(database.db_read)
+        self.ui.tableView.doubleClicked.connect(self.read_from_table)
+
+    def read_from_table(self):
+        for item in self.ui.tableView.selectedIndexes():
+            database.selectedEngine = str(item.row() + 1)
+            print(item.row()+1)
 
     def MSG(self):
         messg = QtWidgets.QMessageBox()
@@ -196,5 +214,3 @@ application = mywindow()
 
 application.show()
 sys.exit(app.exec())
-
-
