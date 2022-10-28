@@ -129,8 +129,6 @@ class RungeKuttaClass():
 
 
 
-
-
 class databaseClass():
     def db_init(self, obj):
 
