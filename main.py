@@ -5,6 +5,15 @@ from PyQt5 import QtWidgets, QtSql
 from pyqtgraph import PlotWidget
 from myform import Ui_MainWindow
 
+class RungeKuttaClass():
+    Gravitation_Param = 398_600_000_000_000
+    def __init__(self):
+        self.t_list = list()
+        self.inc_list = list()
+        self.r_list = list()
+
+    def RK4(self):
+        pass
 
 class theorCalcClass():
     def theor_calc(self):
@@ -121,6 +130,7 @@ class databaseClass():
 
 
 class calculations():
+
     Gravitation_Param = 398_600_000_000_000
 
     def calc_master(self):
