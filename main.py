@@ -2,8 +2,7 @@ import sys
 import math
 import numpy as np
 import pyqtgraph as pg
-from PyQt5 import QtWidgets, QtSql, QtCore
-from pyqtgraph import PlotWidget
+from PyQt5 import QtWidgets, QtSql
 from myform import Ui_MainWindow
 
 
