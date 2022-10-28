@@ -1,9 +1,11 @@
 import sys
 import math
+import numpy as np
 import pyqtgraph as pg
 from PyQt5 import QtWidgets, QtSql
 from pyqtgraph import PlotWidget
 from myform import Ui_MainWindow
+
 
 class RungeKuttaClass():
     Gravitation_Param = 398_600_000_000_000
@@ -11,42 +13,122 @@ class RungeKuttaClass():
         self.t_list = list()
         self.inc_list = list()
         self.r_list = list()
+        self.time = float()
+        self.radius = float()
+        self.inc = float()
+        self.u_ang = float()
+        self.vel= float()
+
+
+
+    def f_psi(self):
+        U_ANG = self.u_ang
+        R_0 = calcCore.Start_Orbit_Radius
+        R_F = calcCore.Finnaly_Orbit_Radius
+        INC_0 = calcCore.Start_Orbit_Inclination
+        INC_F = calcCore.Finally_Orbit_Inclination
+        VEL_0 = calcCore.Initial_Speed
+        V_X = self.vel
+        psi_max = math.atan(math.sin(math.pi*(INC_F-INC_0)/2)/
+                            math.sqrt(R_F/R_0)*1/(1-math.cos(math.pi*(INC_F-INC_0)/2)/
+                            math.sqrt(R_F/R_0)-V_X/VEL_0*
+                            math.sqrt(1-2*math.cos(math.pi*(INC_F-INC_0)/2)/
+                            math.sqrt(R_F/R_0)+R_0/R_F)))
+        res = float()
+        if INC_F < INC_0:
+            if (psi_max < 0):
+                res = psi_max*np.sign(math.cos(U_ANG))
+            else:
+                res = (psi_max - math.pi)*np.sign(math.cos(U_ANG))
+        else:
+            if (psi_max > 0):
+                res = psi_max*np.sign(math.cos(U_ANG))
+            else:
+                res = (psi_max + math.pi)*np.sign(math.cos(U_ANG))
+        return res
+
+    def x_acc(self):
+        INITIAL_ACCELERATION = calcCore.Engines_Thrust/calcCore.Start_SC_Mass
+
+        res = INITIAL_ACCELERATION*math.cos(self.f_psi())*\
+              math.exp(self.vel/calcCore.Gas_Flow_Speed)
+        return res
+    def z_acc(self):
+        INITIAL_ACCELERATION = calcCore.Engines_Thrust / calcCore.Start_SC_Mass
+
+        res = -INITIAL_ACCELERATION*math.cos(self.f_psi())*\
+              math.exp(self.vel/calcCore.Gas_Flow_Speed)
+        return res
+
+    def dr(self, t, r, inc, u_ang,vel):
+        res = 2*self.x_acc()*\
+              math.sqrt((r**3)/self.Gravitation_Param)
+        return res
+
+    def di(self, t, r, inc, u_ang, vel):
+        res = self.z_acc()*math.sqrt(self.radius/self.Gravitation_Param)*\
+              math.cos(u_ang)
+        return res
+
+    def du(self, t, r, inc, u_ang, vel):
+        res = math.sqrt(self.Gravitation_Param/(r**3))
+        return res
+
+    def dV(self, t, r, inc, u_ang, vel):
+        res = math.sqrt((self.x_acc()**2)+
+                        (self.z_acc()**2))
+        return res
 
     def RK4(self):
-        pass
+        self.time = 0
+        self.radius = calcCore.Start_Orbit_Radius
+        self.inc = calcCore.Start_Orbit_Inclination
 
-class theorCalcClass():
-    def theor_calc(self):
-        calcCore.Start_Orbit_Radius = (6371 + calcCore.Start_Orbit_Height) * 1000
-        calcCore.Finnaly_Orbit_Radius = (6371 + calcCore.Finally_Orbit_Height) * 1000
-        calcCore.Initial_Speed = math.sqrt(calcCore.Gravitation_Param / calcCore.Start_Orbit_Radius)
-        calcCore.Delta_velocity = calcCore.Initial_Speed * math.sqrt(
-            1 - 2 * math.sqrt(calcCore.Start_Orbit_Radius / calcCore.Finnaly_Orbit_Radius) *
-            math.cos((math.pi / 2) * (calcCore.Finally_Orbit_Inclination - calcCore.Start_Orbit_Inclination)) +
-            (calcCore.Start_Orbit_Radius / calcCore.Finnaly_Orbit_Radius)
-        )
-        calcCore.Gas_Mass = calcCore.Start_SC_Mass * (
-                1 - math.exp((-calcCore.Delta_velocity) / calcCore.Gas_Flow_Speed)
-        )
-        calcCore.Engines_Thrust = (calcCore.Gas_Flow_Speed * calcCore.Gas_Mass) / calcCore.Fly_Time
-        calcCore.Engines_Power = (calcCore.Engines_Thrust * calcCore.Gas_Flow_Speed) / (2 * calcCore.EFFICIENCY)
-        calcCore.Construct_Mass = calcCore.Realitive_Construct_Mass * calcCore.Start_SC_Mass
-        calcCore.Engines_Mass = calcCore.Engine_Specific_Mass * calcCore.Engines_Thrust
-        calcCore.Electro_Mass = calcCore.Electro_Specific_Mass * calcCore.Engines_Power
-        calcCore.SSS_Mass = calcCore.SSS_Realitive_Mass * calcCore.Gas_Mass
-        calcCore.Payload_Mass = (calcCore.Start_SC_Mass
-                                 - calcCore.Gas_Mass
-                                 - calcCore.Construct_Mass
-                                 - calcCore.SSS_Mass
-                                 - calcCore.Engines_Mass
-                                 - calcCore.Electro_Mass)
-        foo = calcCore.Gas_Mass / (3 * math.pi)
-        calcCore.Tank_Radius = 100 * round(pow(foo, 1 / 3))
-        calcCore.Tank_CTR = round(calcCore.Tank_Radius * 1.5)
-        calcCore.Body_lenght = round(500 * pow(calcCore.Construct_Mass, 1 / 3))
-        calcCore.SP_Square = 0.5 * calcCore.Engines_Power / (1.3 * 0.29 * 0.866)
-        calcCore.Payload_R = round(math.sqrt(calcCore.Payload_Mass / (0.02 * 1.5 * math.pi)))
-        calcCore.EnginesCount = round(calcCore.Engines_Thrust)
+        k = np.zeros((4, 4))
+        h = 100
+        while self.time < calcCore.Fly_Time:
+            k[0][0] = h * self.dr(self.time, self.radius, self.inc, self.u_ang, self.vel)
+            k[1][0] = h * self.di(self.time, self.radius, self.inc, self.u_ang, self.vel)
+            k[2][0] = h * self.du(self.time, self.radius, self.inc, self.u_ang, self.vel)
+            k[3][0] = h * self.dV(self.time, self.radius, self.inc, self.u_ang, self.vel)
+
+            k[0][1] = h * self.dr(self.time + h / 2.0, self.radius + k[0][0] / 2.0, self.inc + k[1][0] / 2.0,
+                             self.u_ang + k[2][0] / 2.0, self.vel + k[3][0] / 2.0)
+            k[1][1] = h * self.di(self.time + h / 2.0, self.radius + k[0][0] / 2.0, self.inc + k[1][0] / 2.0,
+                             self.u_ang + k[2][0] / 2.0, self.vel + k[3][0] / 2.0)
+            k[2][1] = h * self.du(self.time + h / 2.0, self.radius + k[0][0] / 2.0, self.inc + k[1][0] / 2.0,
+                             self.u_ang + k[2][0] / 2.0, self.vel + k[3][0] / 2.0)
+            k[3][1] = h * self.dV(self.time + h / 2.0, self.radius + k[0][0] / 2.0, self.inc + k[1][0] / 2.0,
+                             self.u_ang + k[2][0] / 2.0, self.vel + k[3][0] / 2.0)
+
+            k[0][2] = h * self.dr(self.time + h / 2.0, self.radius + k[0][1] / 2.0, self.inc + k[1][1] / 2.0,
+                             self.u_ang + k[2][1] / 2.0, self.vel + k[3][1] / 2.0)
+            k[1][2] = h * self.di(self.time + h / 2.0, self.radius + k[0][1] / 2.0, self.inc + k[1][1] / 2.0,
+                             self.u_ang + k[2][1] / 2.0, self.vel + k[3][1] / 2.0)
+            k[2][2] = h * self.du(self.time + h / 2.0, self.radius + k[0][1] / 2.0, self.inc + k[1][1] / 2.0,
+                             self.u_ang + k[2][1] / 2.0, self.vel + k[3][1] / 2.0)
+            k[3][2] = h * self.dV(self.time + h / 2.0, self.radius + k[0][1] / 2.0, self.inc + k[1][1] / 2.0,
+                             self.u_ang + k[2][1] / 2.0, self.vel + k[3][1] / 2.0)
+
+            k[0][3] = h * self.dr(self.time + h, self.radius + k[0][2], self.inc + k[1][2], self.u_ang + k[2][2], self.vel + k[3][2]);
+            k[1][3] = h * self.di(self.time + h, self.radius + k[0][2], self.inc + k[1][2], self.u_ang + k[2][2], self.vel + k[3][2]);
+            k[2][3] = h * self.du(self.time + h, self.radius + k[0][2], self.inc + k[1][2], self.u_ang + k[2][2], self.vel + k[3][2]);
+            k[3][3] = h * self.dV(self.time + h, self.radius + k[0][2], self.inc + k[1][2], self.u_ang + k[2][2], self.vel + k[3][2]);
+
+            self.inc_list.append(180*self.inc/math.pi)
+            self.r_list.append(self.radius/1000)
+            self.t_list.append(self.time/86000)
+
+            self.time += h
+            self.radius += (k[0][0]+2.0*k[0][1]+2.0*k[0][2]+k[0][3])/6.0
+            self.inc += (k[1][0]+2.0*k[1][1]+2.0*k[1][2]+k[1][3])/6.0
+            self.u_ang += (k[2][0]+2.0*k[2][1]+2.0*k[2][2]+k[2][3])/6.0
+            self.vel += (k[3][0]+2.0*k[3][1]+2.0*k[3][2]+k[3][3])/6.0
+
+        print('ready')
+
+
+
 
 
 class databaseClass():
@@ -129,10 +211,40 @@ class databaseClass():
         self.db_calc()
 
 
-class calculations():
+class calcClass():
 
     Gravitation_Param = 398_600_000_000_000
-
+    def theor_calc(self):
+        self.Start_Orbit_Radius = (6371 + self.Start_Orbit_Height) * 1000
+        self.Finnaly_Orbit_Radius = (6371 + self.Finally_Orbit_Height) * 1000
+        self.Initial_Speed = math.sqrt(self.Gravitation_Param / self.Start_Orbit_Radius)
+        self.Delta_velocity = self.Initial_Speed * math.sqrt(
+            1 - 2 * math.sqrt(self.Start_Orbit_Radius / self.Finnaly_Orbit_Radius) *
+            math.cos((math.pi / 2) * (self.Finally_Orbit_Inclination - self.Start_Orbit_Inclination)) +
+            (self.Start_Orbit_Radius / self.Finnaly_Orbit_Radius)
+        )
+        self.Gas_Mass = self.Start_SC_Mass * (
+                1 - math.exp((-self.Delta_velocity) / self.Gas_Flow_Speed)
+        )
+        self.Engines_Thrust = (self.Gas_Flow_Speed * self.Gas_Mass) / self.Fly_Time
+        self.Engines_Power = (self.Engines_Thrust * self.Gas_Flow_Speed) / (2 * self.EFFICIENCY)
+        self.Construct_Mass = self.Realitive_Construct_Mass * self.Start_SC_Mass
+        self.Engines_Mass = self.Engine_Specific_Mass * self.Engines_Thrust
+        self.Electro_Mass = self.Electro_Specific_Mass * self.Engines_Power
+        self.SSS_Mass = self.SSS_Realitive_Mass * self.Gas_Mass
+        self.Payload_Mass = (self.Start_SC_Mass
+                                 - self.Gas_Mass
+                                 - self.Construct_Mass
+                                 - self.SSS_Mass
+                                 - self.Engines_Mass
+                                 - self.Electro_Mass)
+        foo = self.Gas_Mass / (3 * math.pi)
+        self.Tank_Radius = 100 * round(pow(foo, 1 / 3))
+        self.Tank_CTR = round(self.Tank_Radius * 1.5)
+        self.Body_lenght = round(500 * pow(self.Construct_Mass, 1 / 3))
+        self.SP_Square = 0.5 * self.Engines_Power / (1.3 * 0.29 * 0.866)
+        self.Payload_R = round(math.sqrt(self.Payload_Mass / (0.02 * 1.5 * math.pi)))
+        self.EnginesCount = round(self.Engines_Thrust)
     def calc_master(self):
         self.Fly_Time = float(application.ui.lineEdit.text()) * 86400
         self.Start_Orbit_Height = float(application.ui.lineEdit_4.text())
@@ -149,12 +261,14 @@ class calculations():
         self.EFFICIENCY *= 0.01
 
         if application.ui.radioButton.isChecked():
-            theorCalc.theor_calc()
+            self.theor_calc()
         if application.ui.radioButton_2.isChecked():
             database.db_read()
             database.db_calc()
         if application.ui.radioButton_3.isChecked():
             database.optimize_calc()
+
+        rk_core.RK4()
 
         self.EFFICIENCY = round(self.EFFICIENCY * 100)
         self.Initial_Speed = round(self.Initial_Speed, 3)
@@ -183,10 +297,9 @@ class calculations():
         application.ui.lineEdit_13.setText(str(self.Initial_Speed / 1000))
 
 
-calcCore = calculations()
-theorCalc = theorCalcClass()
+calcCore = calcClass()
 database = databaseClass()
-
+rk_core = RungeKuttaClass()
 
 class mywindow(QtWidgets.QMainWindow):
     def __init__(self):
