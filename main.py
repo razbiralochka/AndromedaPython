@@ -4,7 +4,7 @@ import numpy as np
 import pyqtgraph as pg
 from PyQt5 import QtWidgets, QtSql
 from myform import Ui_MainWindow
-
+from numba import njit
 
 class RungeKuttaClass():
     Gravitation_Param = 398_600_000_000_000
@@ -77,6 +77,7 @@ class RungeKuttaClass():
                         (self.z_acc()**2))
         return res
 
+
     def RK4(self):
         self.time = 0
         self.radius = calcCore.Start_Orbit_Radius
@@ -84,6 +85,7 @@ class RungeKuttaClass():
 
         k = np.zeros((4, 4))
         h = 100
+
         while self.time < calcCore.Fly_Time:
 
             k[0][0] = h * self.dr(self.time, self.radius, self.inc, self.u_ang, self.vel)
@@ -192,13 +194,6 @@ class databaseClass():
                                  - calcCore.SSS_Mass
                                  - calcCore.Engines_Mass
                                  - calcCore.Electro_Mass)
-        foo = calcCore.Gas_Mass / (3 * math.pi)
-        calcCore.Tank_Radius = 100 * round(pow(foo, 1 / 3))
-        calcCore.Tank_CTR = round(calcCore.Tank_Radius * 1.5)
-        calcCore.Body_lenght = round(500 * pow(calcCore.Construct_Mass, 1 / 3))
-        calcCore.SP_Square = 0.5 * calcCore.Engines_Power / (1.3 * 0.29 * 0.866)
-        calcCore.Payload_R = round(math.sqrt(calcCore.Payload_Mass / (0.02 * 1.5 * math.pi)))
-        calcCore.EnginesCount = round(calcCore.Engines_Thrust)
 
     def optimize_calc(self):
         best = 0
@@ -250,6 +245,7 @@ class calcClass():
         self.SP_Square = 0.5 * self.Engines_Power / (1.3 * 0.29 * 0.866)
         self.Payload_R = round(math.sqrt(self.Payload_Mass / (0.02 * 1.5 * math.pi)))
         self.EnginesCount = round(self.Engines_Thrust)
+
     def calc_master(self):
         self.Fly_Time = float(application.ui.lineEdit.text()) * 86400
         self.Start_Orbit_Height = float(application.ui.lineEdit_4.text())
@@ -272,6 +268,7 @@ class calcClass():
             database.db_calc()
         if application.ui.radioButton_3.isChecked():
             database.optimize_calc()
+
 
         rk_core.RK4()
 
@@ -301,7 +298,36 @@ class calcClass():
         application.ui.lineEdit_14.setText(str(self.Delta_velocity / 1000))
         application.ui.lineEdit_13.setText(str(self.Initial_Speed / 1000))
 
-
+        foo = calcCore.Gas_Mass / (3 * math.pi)
+        Tank_Radius = 100 * round(pow(foo, 1 / 3)/8)
+        Tank_CTR = round(Tank_Radius * 1.5)
+        Body_lenght = round(50 * pow(calcCore.Construct_Mass, 1 / 3))
+        SP_Square = 0.5 * calcCore.Engines_Power / (1.3 * 0.29 * 0.866)
+        SP_W = round(math.sqrt(SP_Square) / 2)
+        SP_L = SP_W * 4;
+        Payload_R = round(math.sqrt(calcCore.Payload_Mass / (0.02 * 1.5 * math.pi)))
+        Payload_L = Payload_R * 1.5
+        EnginesCount = round(calcCore.Engines_Thrust/98.1)
+        EnginePlateRadius = round(Body_lenght * math.sqrt(2) / 2);
+        EngineRadius = 25
+        EngineLenght = 30
+        Engine_CTR = 180
+        export = np.array([Body_lenght,
+                           Body_lenght,
+                           Body_lenght,
+                           Tank_Radius,
+                           Tank_CTR,
+                           EnginePlateRadius,
+                           EngineRadius,
+                           EngineLenght,
+                           Engine_CTR,
+                           EnginesCount,
+                           Payload_R,
+                           Payload_L,
+                           SP_W,
+                           SP_L])
+        np.savetxt("Data.csv", export, fmt='% 4d')
+        application.save_msg()
 calcCore = calcClass()
 database = databaseClass()
 rk_core = RungeKuttaClass()
@@ -328,9 +354,15 @@ class mywindow(QtWidgets.QMainWindow):
     def MSG(self):
         messg = QtWidgets.QMessageBox()
         messg.setWindowTitle("О Программе")
-        messg.setText("Хайруллин И.И.")
+        messg.setText("Разработчики:\n "
+                      "Белоглазов Марк гр. 1407-240501D\n "
+                      "Филимонов Иван гр. 1408-240501D")
         x = messg.exec_()
-
+    def save_msg(self):
+        messg = QtWidgets.QMessageBox()
+        messg.setWindowTitle("Информация об экспорте")
+        messg.setText("Данные занесены в таблицу Data.csv")
+        x = messg.exec_()
 
 app = QtWidgets.QApplication([])
 

@@ -271,7 +271,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Andromeda(Python)"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "МТА с ЭРДУ | Хайруллин И.И"))
         self.label_3.setToolTip(_translate("MainWindow", "<html><head/><body><p>Коэффициент полезного действия</p></body></html>"))
         self.label_3.setText(_translate("MainWindow", "КПД , %"))
         self.label.setText(_translate("MainWindow", "Время перелёта, сут"))
